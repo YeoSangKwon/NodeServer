@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Web Site</title>
+    <meta http-equiv="content-script-type" content="text/javascript"> 
+    <script type="text/javascript" src="http://code.jquery.com/jquery-3.4.1.js"></script>
+    <script type="text/javascript" src="../js/mainFunction.js"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=e5347479ee87fd0a32072b1e9c69121d"></script>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+    <h1>apiServer</h1>
+
+    <b1>Crawling</b1>
+    <div style="margin: 1rem">
+        <button class="menu" value="crawlingTest">crawlingTest</button>
+        <button class="menu" value="dbconn">dbconn</button>
+    </div>
+
+    <b1>API Service</b1>
+    <div style="margin: 1rem">
+        <button class="menu" value="apiService">apiService</button>
+    </div>
+    
+    <b1>DB INSERT</b1>
+    <div style="margin: 1rem">
+        <input type="text" id="user_nm" placeholder="이름"></input>
+        <input type="number" id="user_age" placeholder="나이"></input>
+        <button class="menu" value="Insert">Insert</button>
+    </div>
+
+    <b1>PUSH MESSAGE SEND</b1>
+    <div>
+        <ul>
+            <li>
+                <div style="margin: 1rem">
+                    <input type="text" id="new_msg" placeholder="내용 입력"></input>
+                    <button class="menu" value="msg_insert">DB Insert</button>
+                </div>
+            </li>
+            <li>
+                <div style="margin: 1rem">
+                    <input type="text" id="push_msg" placeholder="메시지 입력"></input>
+                    <button class="menu" value="push">발송</button>
+                </div>
+            </li>
+            <li>
+                <div style="margin: 1rem">
+                    <button class="menu" value="pushAuto">DB 발송</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <b1>File Send</b1>
+    <div style="margin: 1rem">
+        <form action="upload" method="post" enctype="multipart/form-data">
+            <input type="file" name='userfile' placeholder="파일명"></input>
+            <input type="submit"/>
+        </form>
+    </div>
+
+    <div id="map" style="width:500px;height:400px;"></div>
+
+    <script type="text/javascript">
+
+        //페이지 시작 시 접속한 기기 확인 (브라우져, 단말기)
+        $(document).ready(function(){
+            var varUA = navigator.userAgent.toLowerCase(); //userAgent 값 얻기
+            console.log(varUA);
+
+            var container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
+            var options = { //지도를 생성할 때 필요한 기본 옵션
+                center: new kakao.maps.LatLng(35.8351122, 128.5441227), //지도의 중심좌표.
+                level: 3 //지도의 레벨(확대, 축소 정도)
+            };
+
+            var map = new kakao.maps.Map(container, options); //지도 생성 및 객체 리턴
+        });
+
+        $('.menu').click(function(e){
+            if("crawlingTest" == $(e.currentTarget).attr("value")){
+                location.href = "/crawling/crawlingTest";    
+            }else if("dbconn" == $(e.currentTarget).attr("value")){
+                location.href = "/crawling/dbconn";
+            }else if("apiService" == $(e.currentTarget).attr("value")){
+                $.ajax({
+                    url: '/crawling/api',
+                    dataType: 'json',
+                    type: 'POST',
+                    data: { sender: '01089303234',
+                            contents: 'test',
+                            receiveDate: '2019-10-10 16:30' 
+                        },
+                    success: function(result) {
+                        if (result) {
+                            console.log(result);
+                        }
+                    }
+                });
+            }else if("Insert" == $(e.currentTarget).attr("value")){
+                if(""!= $('#user_nm').val() || "" !=  $('#user_age').val()){
+                    $.ajax({
+                    url: '/crawling/insert',
+                    dataType: 'json',
+                    type: 'POST',
+                    data: {key: "user", name:$('#user_nm').val(), age: $('#user_age').val()},
+                    success: function(result) {
+                        if (result) {
+                            console.log(result.msg);
+                            alert("저장완료");
+                            $('#user_nm').val("");
+                            $('#user_age').val("");
+                        }
+                        }
+                    });
+                }else{
+                    alert("이름 또는 나이를 입력하세요");
+                }
+            }else if("InsertFile" == $(e.currentTarget).attr("value")){
+                
+
+
+            }else if("push" == $(e.currentTarget).attr("value")){
+                let msg = $('#push_msg').val();
+                if("" != msg){
+                    $.ajax({
+                        url: "/pushSend",
+                        type: "GET",
+                        dataType: "json",
+                        data: {body: msg},
+                        success: function(result){
+                            alert("'"+msg+"' 메시지가 발송되었습니다.");
+                            $('#push_msg').val("");
+                        }
+                    });
+                }else{
+                    alert("발송 메시지를 입력하세요");
+                }
+            }else if("pushAuto" == $(e.currentTarget).attr("value") ){
+                getMessage();
+            }else if("msg_insert" ==  $(e.currentTarget).attr("value") && "" != $('#new_msg').val()){
+                let msg =  $('#new_msg').val();
+                if(InsertDB(msg)){
+                    $('#new_msg').val("");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
